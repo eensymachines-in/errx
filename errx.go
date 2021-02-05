@@ -142,7 +142,16 @@ type ErrInsuffPrivlg struct {
 	*errxUnatuho
 }
 
+// ErrLogin : When the user credentials fail, and do not match that in the database
+// typically after this tokens would not be generated
+type ErrLogin struct {
+	*errxUnatuho
+}
+
 // NewErr : generates a new custom error
+// given the type of the error this can construct a new error of the desired type
+// also enwraps the inner error within
+// to be used from deep libraries underlying
 func NewErr(t interface{}, e error, m, ct string) Errx {
 	badrequest := &errxBadRequest{&errx{UMsg: m, Ctx: ct, InnerErr: e}}
 	badgtway := &errxGateway{&errx{UMsg: m, Ctx: ct, InnerErr: e}}
@@ -167,6 +176,8 @@ func NewErr(t interface{}, e error, m, ct string) Errx {
 		return &ErrTokenExpired{unauth}
 	case *ErrInsuffPrivlg:
 		return &ErrInsuffPrivlg{unauth}
+	case *ErrLogin:
+		return &ErrLogin{unauth}
 	}
 	return nil
 }
