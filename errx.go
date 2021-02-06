@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -40,6 +41,7 @@ type errx struct {
 	UMsg     string // User Message
 	Ctx      string
 	InnerErr error // internal to 3rd party libraries, cannot be exposed to front end
+	uid      string
 }
 
 // HTTPStatusCode : error type to a appropriate status code
@@ -49,11 +51,13 @@ func (e *errx) HTTPStatusCode() int {
 
 // UserMessage :gets the user message approriate for front end user consumption
 func (e *errx) UserMessage() string {
-	return e.UMsg
+	// will be shown on the ui
+	// the user can quote this number
+	return fmt.Sprintf("%s\n%s", e.UMsg, e.uid)
 }
 
 func (e *errx) Error() string {
-	return fmt.Sprintf("%s: %s-%s", e.Ctx, e.UMsg, e.InnerErr)
+	return fmt.Sprintf("%s:%s: %s-%s", e.uid, e.Ctx, e.UMsg, e.InnerErr)
 }
 
 // Log : logs the error to whatever tty is assigned
@@ -153,10 +157,11 @@ type ErrLogin struct {
 // also enwraps the inner error within
 // to be used from deep libraries underlying
 func NewErr(t interface{}, e error, m, ct string) Errx {
-	badrequest := &errxBadRequest{&errx{UMsg: m, Ctx: ct, InnerErr: e}}
-	badgtway := &errxGateway{&errx{UMsg: m, Ctx: ct, InnerErr: e}}
-	intsrv := &errxIntServer{&errx{UMsg: m, Ctx: ct, InnerErr: e}}
-	unauth := &errxUnatuho{&errx{UMsg: m, Ctx: ct, InnerErr: e}}
+	u := uuid.NewString()[24:] //32 bit id with 4 -, we want the last 12 unique number to identify the error
+	badrequest := &errxBadRequest{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
+	badgtway := &errxGateway{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
+	intsrv := &errxIntServer{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
+	unauth := &errxUnatuho{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
 	switch t.(type) {
 	case *ErrJSONBind:
 		return &ErrJSONBind{badrequest}
