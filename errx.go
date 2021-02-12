@@ -141,15 +141,24 @@ type ErrTokenExpired struct {
 	*errxUnatuho
 }
 
-// ErrInsuffPrivlg : when the role of the user disallows certain actions on the api
-type ErrInsuffPrivlg struct {
-	*errxUnatuho
-}
-
 // ErrLogin : When the user credentials fail, and do not match that in the database
 // typically after this tokens would not be generated
 type ErrLogin struct {
 	*errxUnatuho
+}
+
+type errxForbid struct {
+	*errx
+}
+
+// HTTPStatusCode : json binding errors are often the result of body of the request being disfugured
+func (errfbd *errxForbid) HTTPStatusCode() int {
+	return http.StatusForbidden
+}
+
+// ErrInsuffPrivlg : when the role of the user disallows certain actions on the api
+type ErrInsuffPrivlg struct {
+	*errxForbid
 }
 
 // NewErr : generates a new custom error
@@ -162,6 +171,7 @@ func NewErr(t interface{}, e error, m, ct string) Errx {
 	badgtway := &errxGateway{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
 	intsrv := &errxIntServer{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
 	unauth := &errxUnatuho{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
+	forbid := &errxForbid{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
 	switch t.(type) {
 	case *ErrJSONBind:
 		return &ErrJSONBind{badrequest}
@@ -180,7 +190,7 @@ func NewErr(t interface{}, e error, m, ct string) Errx {
 	case *ErrTokenExpired:
 		return &ErrTokenExpired{unauth}
 	case *ErrInsuffPrivlg:
-		return &ErrInsuffPrivlg{unauth}
+		return &ErrInsuffPrivlg{forbid}
 	case *ErrLogin:
 		return &ErrLogin{unauth}
 	}
