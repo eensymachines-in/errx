@@ -106,11 +106,6 @@ type ErrJSONBind struct {
 	*errxBadRequest
 }
 
-// ErrNotFound : error binding request body from json to object
-type ErrNotFound struct {
-	*errxBadRequest
-}
-
 // ErrDuplicate : error binding request body from json to object
 type ErrDuplicate struct {
 	*errxBadRequest
@@ -119,6 +114,19 @@ type ErrDuplicate struct {
 // ErrInvalid : error binding request body from json to object
 type ErrInvalid struct {
 	*errxBadRequest
+}
+
+type errxNotFound struct {
+	*errx
+}
+
+func (enf *errxNotFound) HTTPStatusCode() int {
+	return http.StatusNotFound
+}
+
+// ErrNotFound : error binding request body from json to object
+type ErrNotFound struct {
+	*errxNotFound
 }
 
 // ErrQuery : error binding request body from json to object
@@ -172,11 +180,12 @@ func NewErr(t interface{}, e error, m, ct string) Errx {
 	intsrv := &errxIntServer{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
 	unauth := &errxUnatuho{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
 	forbid := &errxForbid{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
+	notfnd := &errxNotFound{&errx{UMsg: m, Ctx: ct, InnerErr: e, uid: u}}
 	switch t.(type) {
 	case *ErrJSONBind:
 		return &ErrJSONBind{badrequest}
 	case *ErrNotFound:
-		return &ErrNotFound{badrequest}
+		return &ErrNotFound{notfnd}
 	case *ErrDuplicate:
 		return &ErrDuplicate{badrequest}
 	case *ErrInvalid:
