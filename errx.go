@@ -27,14 +27,15 @@ func DigestErr(err error, c *gin.Context) int {
 	x, ok := err.(Errx)
 	if x != nil && ok {
 		x.Log()
-		c.AbortWithError(x.HTTPStatusCode(), fmt.Errorf(x.UserMessage()))
+		c.AbortWithStatusJSON(x.HTTPStatusCode(), gin.H{"message": x.UserMessage()})
+		// c.AbortWithError(x.HTTPStatusCode(), fmt.Errorf(x.UserMessage()))
 		return 1
 	}
 	// when the error object does not implement Errx interface
 	log.Error(err)
-	c.AbortWithError(http.StatusInternalServerError, err)
+	c.AbortWithStatusJSON(x.HTTPStatusCode(), gin.H{"message": err.Error()})
+	// c.AbortWithError(http.StatusInternalServerError, err)
 	return 1
-
 }
 
 type errx struct {
